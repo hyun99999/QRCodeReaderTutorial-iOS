@@ -1,6 +1,5 @@
 # QRCodeReaderTutorial-iOS
 🏁 make QRcode and QRcode Reader Tutorial
-
 QR코드와 리더기를 만드는 오픈 라이브러리가 있지만 자체 라이브러리를 활용해서 만들어보기로 했다.
 
 # 목차
@@ -196,13 +195,19 @@ class QRCodeModalViewController: UIViewController {
 
 [`seesionPreset`](https://developer.apple.com/documentation/avfoundation/avcapturesession/1389696-sessionpreset) 속성을 사용해서 출력에 대한 품질 수준, 비트 전송률 또는 기타 설정을 사용자 지정합니다.(기본값은 high 입니다.
 
-전반적인 순서
+- 전반적인 순서와 metadata 에 대해서 먼저 알아보자
 
 1️⃣  AVCaptureSession 개체를 인스턴스화
 
 2️⃣  적절한 inputs 설정
 
 3️⃣  적절한 ouputs 설정
+
+4️⃣ `startRunning()` 과 `stopRunning()` 로 흐름 통제
+
+[metadata](https://developer.apple.com/documentation/avfoundation/avcapturephotosettings/2875951-metadata) : 사진 파일 output 에 포함할 metadata keys 와 values 의 딕셔너리. 
+
+즉, 여기서는 photo 데이터에 대한 데이터를 의미한다.
 
 - QRCodeReaderViewController : QR코드 reader 를 추가하고 읽은 정보를 다루는 뷰컨트롤러
 
@@ -251,7 +256,8 @@ extension QRCodeReaderViewController {
             // ✅ session 에 주어진 output 를 추가.
             captureSession.addOutput(output)
 
-            // ✅             
+            // ✅ AVCaptureMetadataOutputObjectsDelegate 포로토콜을 채택하는 delegate 와 dispatch queue 를 설정한다.
+            // ✅ queue : delegate 의 메서드를 실행할 큐이다. 이 큐는 metadata 가 받은 순서대로 전달되려면 반드시 serial queue(직렬큐) 여야 한다.     
             output.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
             
             // ✅ 리더기가 인식할 수 있는 코드 타입을 정한다. 이 프로젝트의 경우 qr.
@@ -261,6 +267,7 @@ extension QRCodeReaderViewController {
             setVideoLayer()
             setGuideCrossLineView()
             
+            // 4️⃣ startRunning() 과 stopRunning() 로 흐름 통제
             // ✅ input 에서 output 으로의 데이터 흐름을 시작
             captureSession.startRunning()
         }
@@ -296,16 +303,24 @@ extension QRCodeReaderViewController {
     }
 }
 
-// ✅ 
+// ✅ metadata capture ouput 에서 생성된 metatdata 를 수신하는 메서드.
+// ✅ 이 프로토콜은 위에서처럼 AVCaptureMetadataOutput object 가 채택해야만 한다. 단일 메서드가 있고 옵션이다.
+// ✅ 이 메서드를 사용하면 capture metadata ouput object 가 connection 을 통해서 관련된 metadata objects 를 수신할 때 응답할 수 있다.(아래 메서드의 파라미터를 통해 다룰 수 있다.)
+// ✅ 즉, 이 프로토콜을 통해서 metadata 를 수신해서 반응할 수 있다.
 extension QRCodeReaderViewController: AVCaptureMetadataOutputObjectsDelegate {
+
+    // ✅ caputure output object 가 새로운 metadata objects 를 보냈을 때 알린다.
     func metadataOutput(_ captureOutput: AVCaptureMetadataOutput,
                         didOutput metadataObjects: [AVMetadataObject],
                         from connection: AVCaptureConnection) {
 
-        // ✅ metadataObjects : 인식한 사물의 수
+        // ✅ metadataObjects : 새로 내보낸 AVMetadataObject 인스턴스 배열이다.
         if let metadataObject = metadataObjects.first {
 
-            // ✅
+            // ✅ AVMetadataObject 는 추상 클래스이므로 이 배열의 object 는 항상 구체적인 하위 클래스의 인스턴스여야 한다.
+            // ✅ AVMetadataObject 를 직접 서브클래싱해선 안된다. 대신 AVFroundation 프레임워크에서 제공하는 정의된 하위 클래스 중 하나를 사용해야 한다.
+            // ✅ AVMetadataMachineReadableCodeObject : 바코드의 기능을 정의하는 AVMetadataObject 의 구체적인 하위 클래스. 인스턴스는 이미지에서 감지된 판독 가능한 바코드의 기능과 payload 를 설명하는 immutable object 를 나타낸다.
+            // ✅ (참고로 이외에도 AVMetadataFaceObject 라는 감지된 단일 얼굴의 기능을 정의하는 subclass 도 있다.)
             guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject, let stringValue = readableObject.stringValue else {
                 return
             }
@@ -314,6 +329,7 @@ extension QRCodeReaderViewController: AVCaptureMetadataOutputObjectsDelegate {
             if stringValue.hasPrefix("http://") || stringValue.hasPrefix("https://")  {
                 print(stringValue)
 
+                // 4️⃣ startRunning() 과 stopRunning() 로 흐름 통제
                 // ✅ input 에서 output 으로의 흐름 중지
                 self.captureSession.stopRunning()
                 self.dismiss(animated: true, completion: nil)
