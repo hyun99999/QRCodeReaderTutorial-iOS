@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="18122" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="18093"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="QRCodeTutorial_iOS" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="1" translatesAutoresizingMaskIntoConstraints="NO" id="6CE-Rq-I9a">
+                                <rect key="frame" x="20" y="94" width="374" height="500"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="500" id="gBS-mu-rBc"/>
+                                </constraints>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Djq-TC-Bm5">
+                                <rect key="frame" x="354.5" y="114" width="19.5" height="22"/>
+                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <state key="normal" image="qrcode" catalog="system"/>
+                                <connections>
+                                    <action selector="presentToQRCodeModalViewController:" destination="BYZ-38-t0r" eventType="touchUpInside" id="W87-jL-nDL"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1Lw-6e-Xu4">
+                                <rect key="frame" x="280" y="52" width="114" height="22"/>
+                                <state key="normal" title="카드추가하기" image="plus.circle.fill" catalog="system">
+                                    <color key="titleColor" name="AccentColor"/>
+                                </state>
+                                <connections>
+                                    <action selector="presentToQRCodeReaderViewController:" destination="BYZ-38-t0r" eventType="touchUpInside" id="mXh-oe-oSq"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="1Lw-6e-Xu4" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="8" id="9Fs-2m-SST"/>
+                            <constraint firstItem="6CE-Rq-I9a" firstAttribute="top" secondItem="1Lw-6e-Xu4" secondAttribute="bottom" constant="20" id="PhT-vF-pK5"/>
+                            <constraint firstItem="6CE-Rq-I9a" firstAttribute="trailing" secondItem="Djq-TC-Bm5" secondAttribute="trailing" constant="20" id="Yvm-zH-OsW"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="6CE-Rq-I9a" secondAttribute="trailing" constant="20" id="fLW-ph-t8b"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="1Lw-6e-Xu4" secondAttribute="trailing" constant="20" id="jCd-pz-DpG"/>
+                            <constraint firstItem="6CE-Rq-I9a" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="p9A-Dp-R0Q"/>
+                            <constraint firstItem="Djq-TC-Bm5" firstAttribute="top" secondItem="6CE-Rq-I9a" secondAttribute="top" constant="20" id="sAL-py-EhL"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="addCardButton" destination="1Lw-6e-Xu4" id="1eD-4y-M00"/>
+                        <outlet property="cardImageView" destination="6CE-Rq-I9a" id="ZOD-YM-CbJ"/>
+                        <outlet property="qrcodeButton" destination="Djq-TC-Bm5" id="CTr-3v-YjY"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="111.59420289855073" y="50.892857142857139"/>
+        </scene>
+        <!--Code Modal View Controller-->
+        <scene sceneID="xT9-Kh-qVB">
+            <objects>
+                <viewController storyboardIdentifier="QRCodeModalViewController" id="oQE-Kg-Liv" customClass="QRCodeModalViewController" customModule="QRCodeTutorial_iOS" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="QyI-6c-p2S">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="JT7-XC-Zk0">
+                                <rect key="frame" x="107" y="244" width="200" height="200"/>
+                                <color key="backgroundColor" systemColor="systemGray6Color"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="200" id="rgw-bV-iC1"/>
+                                    <constraint firstAttribute="width" constant="200" id="vIG-ue-63B"/>
+                                </constraints>
+                            </view>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="fOv-da-ZlJ"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="JT7-XC-Zk0" firstAttribute="top" secondItem="fOv-da-ZlJ" secondAttribute="top" constant="200" id="5oP-fN-ty9"/>
+                            <constraint firstItem="JT7-XC-Zk0" firstAttribute="centerX" secondItem="QyI-6c-p2S" secondAttribute="centerX" id="BxE-BM-RpQ"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="qrcodeView" destination="JT7-XC-Zk0" id="A4I-oi-AEE"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="IG8-ln-FjX" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1019" y="53"/>
+        </scene>
+        <!--Code Reader View Controller-->
+        <scene sceneID="Xdd-ok-1uL">
+            <objects>
+                <viewController storyboardIdentifier="QRCodeReaderViewController" id="zKG-mg-a4f" customClass="QRCodeReaderViewController" customModule="QRCodeTutorial_iOS" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ype-bW-exN">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="RMN-N2-5Gx"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="22M-pB-Gl1" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1748" y="54"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="1" width="2000" height="3000"/>
+        <image name="plus.circle.fill" catalog="system" width="128" height="121"/>
+        <image name="qrcode" catalog="system" width="128" height="114"/>
+        <namedColor name="AccentColor">
+            <color red="0.0" green="0.46000000000000002" blue="0.89000000000000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemGray6Color">
+            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+    </resources>
+</document>
