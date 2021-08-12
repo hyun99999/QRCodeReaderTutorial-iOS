@@ -367,7 +367,7 @@ extension QRCodeReaderViewController: AVCaptureMetadataOutputObjectsDelegate {
 
 - `AVCaputureMetadataOutput` 의 `rectOfInterest` 속성을 이용하면 된다. 먼저 개발자 문서를 살펴보자.
 
-### [rectOfInterest][https://developer.apple.com/documentation/avfoundation/avcapturemetadataoutput/1616291-rectofinterest/](https://developer.apple.com/documentation/avfoundation/avcapturemetadataoutput/1616291-rectofinterest/)
+### [rectOfInterest](https://developer.apple.com/documentation/avfoundation/avcapturemetadataoutput/1616291-rectofinterest/)
 
 - 시각적 metatdata 의 검색 영역을 제한하기 위한 사각형을 결정하는 `CGRect` 값이다.
 - 사각형의 origin(원점) 은 왼쪽 상단이고 metatdat 를 제공하는 장치의 좌표공간을 기준으로 한다.
@@ -378,7 +378,7 @@ extension QRCodeReaderViewController: AVCaptureMetadataOutputObjectsDelegate {
 
 그래서 우리는  `metadataOutputRectConverted` 를 사용해서 비율로 변환해주어야 한다.
 
-### [metadataOutputRectConverted][https://developer.apple.com/documentation/avfoundation/avcapturevideopreviewlayer/1623495-metadataoutputrectconverted](https://developer.apple.com/documentation/avfoundation/avcapturevideopreviewlayer/1623495-metadataoutputrectconverted)
+### [metadataOutputRectConverted](https://developer.apple.com/documentation/avfoundation/avcapturevideopreviewlayer/1623495-metadataoutputrectconverted)
 
 - preview layer(여기서는 AVCaptureVideoPreviewLayer 개체에 해당) 의 metadata ouputs 에 사용되는 좌표계의 사각형으로 변환.
 
@@ -538,4 +538,7 @@ extension QRCodeReaderViewController {
     }
 }
 ```
+
+**참고 : **
+[[iOS] Swift QRCode 읽기](https://nebori.tistory.com/28)
 
