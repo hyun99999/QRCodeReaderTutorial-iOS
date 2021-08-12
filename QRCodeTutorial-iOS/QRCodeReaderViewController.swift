@@ -21,6 +21,7 @@ class QRCodeReaderViewController: UIViewController {
 extension QRCodeReaderViewController {
     
     private func basicSetting() {
+        
         guard let captureDevice = AVCaptureDevice.default(for: AVMediaType.video) else {
             fatalError("No video device found")
         }
@@ -29,14 +30,18 @@ extension QRCodeReaderViewController {
             captureSession.addInput(input)
             
             let output = AVCaptureMetadataOutput()
+//            output.rectOfInterest =
             captureSession.addOutput(output)
             
             output.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
             output.metadataObjectTypes = [AVMetadataObject.ObjectType.qr]
             
+
             setVideoLayer()
-            setGuideCrossLineView()
             
+            // guideline
+            let rectOfInterest = CGRect(x: (UIScreen.main.bounds.width - 200) / 2 , y: (UIScreen.main.bounds.height - 200) / 2, width: 200, height: 200)
+            setGuideCrossLineView(rectOfInterest: rectOfInterest)
             captureSession.startRunning()
         }
         catch {
@@ -52,7 +57,7 @@ extension QRCodeReaderViewController {
         videoLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
         view.layer.addSublayer(videoLayer)
     }
-    private func setGuideCrossLineView() {
+    private func setGuideCrossLineView(rectOfInterest: CGRect) {
         let guideCrossLine = UIImageView()
         guideCrossLine.image = UIImage(systemName: "plus")
         guideCrossLine.tintColor = .green
@@ -64,6 +69,76 @@ extension QRCodeReaderViewController {
             guideCrossLine.widthAnchor.constraint(equalToConstant: 30),
             guideCrossLine.heightAnchor.constraint(equalToConstant: 30)
         ])
+        
+        let cornerLength: CGFloat = 20
+        let cornerLineWidth: CGFloat = 5
+        
+        // Focus Zone의 각 모서리 point
+        let upperLeftPoint = CGPoint(x: rectOfInterest.minX, y: rectOfInterest.minY)
+        let upperRightPoint = CGPoint(x: rectOfInterest.maxX, y: rectOfInterest.minY)
+        let lowerRightPoint = CGPoint(x: rectOfInterest.maxX, y: rectOfInterest.maxY)
+        let lowerLeftPoint = CGPoint(x: rectOfInterest.minX, y: rectOfInterest.maxY)
+        
+        // 각 모서리를 중심으로 한 Edge를 그림.
+        let upperLeftCorner = UIBezierPath()
+        upperLeftCorner.lineWidth = cornerLineWidth
+        upperLeftCorner.move(to: CGPoint(x: upperLeftPoint.x + cornerLength, y: upperLeftPoint.y))
+        upperLeftCorner.addLine(to: CGPoint(x: upperLeftPoint.x, y: upperLeftPoint.y))
+        upperLeftCorner.addLine(to: CGPoint(x: upperLeftPoint.x, y: upperLeftPoint.y + cornerLength))
+        
+        let upperRightCorner = UIBezierPath()
+        upperRightCorner.lineWidth = cornerLineWidth
+        upperRightCorner.move(to: CGPoint(x: upperRightPoint.x - cornerLength, y: upperRightPoint.y))
+        upperRightCorner.addLine(to: CGPoint(x: upperRightPoint.x, y: upperRightPoint.y))
+        upperRightCorner.addLine(to: CGPoint(x: upperRightPoint.x, y: upperRightPoint.y + cornerLength))
+        
+        let lowerRightCorner = UIBezierPath()
+        lowerRightCorner.lineWidth = cornerLineWidth
+        lowerRightCorner.move(to: CGPoint(x: lowerRightPoint.x, y: lowerRightPoint.y - cornerLength))
+        lowerRightCorner.addLine(to: CGPoint(x: lowerRightPoint.x, y: lowerRightPoint.y))
+        lowerRightCorner.addLine(to: CGPoint(x: lowerRightPoint.x - cornerLength, y: lowerRightPoint.y))
+        
+        let lowerLeftCorner = UIBezierPath()
+        lowerLeftCorner.lineWidth = cornerLineWidth
+        lowerLeftCorner.move(to: CGPoint(x: lowerLeftPoint.x + cornerLength, y: lowerLeftPoint.y))
+        lowerLeftCorner.addLine(to: CGPoint(x: lowerLeftPoint.x, y: lowerLeftPoint.y))
+        lowerLeftCorner.addLine(to: CGPoint(x: lowerLeftPoint.x, y: lowerLeftPoint.y - cornerLength))
+        
+        upperLeftCorner.stroke()
+        upperRightCorner.stroke()
+        lowerRightCorner.stroke()
+        lowerLeftCorner.stroke()
+        
+        // layer 에 추가
+        
+        let upperLeftCornerLayer = CAShapeLayer()
+        upperLeftCornerLayer.path = upperLeftCorner.cgPath
+        upperLeftCornerLayer.strokeColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        upperLeftCornerLayer.fillColor = UIColor.clear.cgColor
+        upperLeftCornerLayer.lineWidth = cornerLineWidth
+        
+        let upperRightCornerLayer = CAShapeLayer()
+        upperRightCornerLayer.path = upperRightCorner.cgPath
+        upperRightCornerLayer.strokeColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        upperRightCornerLayer.fillColor = UIColor.clear.cgColor
+        upperRightCornerLayer.lineWidth = cornerLineWidth
+        
+        let lowerRightCornerLayer = CAShapeLayer()
+        lowerRightCornerLayer.path = lowerRightCorner.cgPath
+        lowerRightCornerLayer.strokeColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        lowerRightCornerLayer.fillColor = UIColor.clear.cgColor
+        lowerRightCornerLayer.lineWidth = cornerLineWidth
+ 
+        let lowerLeftCornerLayer = CAShapeLayer()
+        lowerLeftCornerLayer.path = lowerLeftCorner.cgPath
+        lowerLeftCornerLayer.strokeColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        lowerLeftCornerLayer.fillColor = UIColor.clear.cgColor
+        lowerLeftCornerLayer.lineWidth = cornerLineWidth
+        
+        view.layer.addSublayer(upperLeftCornerLayer)
+        view.layer.addSublayer(upperRightCornerLayer)
+        view.layer.addSublayer(lowerRightCornerLayer)
+        view.layer.addSublayer(lowerLeftCornerLayer)
     }
 }
 
