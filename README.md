@@ -6,6 +6,7 @@ QR코드와 리더기를 만드는 오픈 라이브러리가 있지만 자체 �
 
 - [QR코드 만들기](#qr코드-만들기)
 - [QR코드 Reader 만들기](#qr코드-reader-만들기)
+- [원하는 영역에서만 QR코드 읽기](#원하는-영역에서만-qr코드-읽기)
 
 ### 완성
 
@@ -356,4 +357,185 @@ extension QRCodeReaderViewController: AVCaptureMetadataOutputObjectsDelegate {
 [[iOS] QR Code Scanner 만들기 - AvFoundation 이용](https://dongminyoon.tistory.com/19)
 
 [IOS) QRCode 리더기 만들기](https://hururuek-chapchap.tistory.com/34)
+
+---
+# 원하는 영역에서만 QR코드 읽기
+
+우리가 접하는 QR코드 리더기는 특정 영역안에서 QR코드가 읽힌다. 그 이유로 나는 많은 QR코드가 카메라에 잡히지 않도록 사용자를 유도함과 동시에 사용자가 본인의 QR코드를 입력하는 인식을 주기 위함이라고 생각이 든다. 핸드폰을 제대로 가져다 대지도 않았는데 조금이라도 카메라에 노출된 QR코드가 바로 읽힌다면 사용자는 분명 당황스러울 것이다.
+
+그래서 이런 이유로 QR코드 영역을 지정하는 것을 해보려 한다.
+
+- `AVCaputureMetadataOutput` 의 `rectOfInterest` 속성을 이용하면 된다. 먼저 개발자 문서를 살펴보자.
+
+### [rectOfInterest][https://developer.apple.com/documentation/avfoundation/avcapturemetadataoutput/1616291-rectofinterest/](https://developer.apple.com/documentation/avfoundation/avcapturemetadataoutput/1616291-rectofinterest/)
+
+- 시각적 metatdata 의 검색 영역을 제한하기 위한 사각형을 결정하는 `CGRect` 값이다.
+- 사각형의 origin(원점) 은 왼쪽 상단이고 metatdat 를 제공하는 장치의 좌표공간을 기준으로 한다.
+- rectangle of interest 를 지정하면 특정 유형의 metadata 에 대한 감지 능력이 향상될 수 있다. `rectOfInterest` 를 가로지르는 metadata ojects 의 bounds 가 아니면 리턴하지 않는다.(즉 사각형안에 있지 않으면 인식하지 않는다는 말.)
+- 기본값은 (0.0, 0.0, 1.0, 1.0) 이다.
+
+**기본값이....? 조금 이상하다. width 와 height 에 기본값이 1.0 이라.. 실제로 값을 나중에 출력해보면 알겠지만 0~100% 까지  비율의 프레임을 채운다고 한다. 그래서 아무런 속성설정 없는 기본값에서는 전체 프레임에서 qr코드를 인식했었다.**
+
+그래서 우리는  `metadataOutputRectConverted` 를 사용해서 비율로 변환해주어야 한다.
+
+### [metadataOutputRectConverted][https://developer.apple.com/documentation/avfoundation/avcapturevideopreviewlayer/1623495-metadataoutputrectconverted](https://developer.apple.com/documentation/avfoundation/avcapturevideopreviewlayer/1623495-metadataoutputrectconverted)
+
+- preview layer(여기서는 AVCaptureVideoPreviewLayer 개체에 해당) 의 metadata ouputs 에 사용되는 좌표계의 사각형으로 변환.
+
+`+`  모양이었던 가이드 라인에서 **정사각형의 가이드라인을 보여주고 거기서만 QR코드가 읽히도록 해보자.** 
+
+가이드라인을 그리는 작업은 최근에 읽었던 zedd 님의 UIBezierPath 에 관한 글을 읽어봤고 활용해보기로 했다.
+
+[iOS ) UIBezierPath (3) - Triangle, Circle](https://zeddios.tistory.com/822?category=682195)
+
+### 완성
+
+<img src ="https://user-images.githubusercontent.com/69136340/129237145-666742e1-5769-4578-9ff5-05adebfde216.gif" width ="250">
+
+### 코드
+
+- QRCodeReaderViewController.swift
+
+✅ **영역 제한**
+
+```swift
+extension QRCodeReaderViewController {
+    
+    private func basicSetting() {
+        
+        guard let captureDevice = AVCaptureDevice.default(for: AVMediaType.video) else {
+            fatalError("No video device found")
+        }
+        do {
+            // ✅ 제한하고 싶은 영역
+            let rectOfInterest = CGRect(x: (UIScreen.main.bounds.width - 200) / 2 , y: (UIScreen.main.bounds.height - 200) / 2, width: 200, height: 200)
+            
+            let input = try AVCaptureDeviceInput(device: captureDevice)
+            captureSession.addInput(input)
+            
+            let output = AVCaptureMetadataOutput()
+            captureSession.addOutput(output)
+            
+            output.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+            output.metadataObjectTypes = [AVMetadataObject.ObjectType.qr]
+            
+            // ✅ preview layer 에서의 영역 변환값을 리턴받아 사용하기 위해서 기존 코드에서 수정해주었다.
+            let rectConverted = setVideoLayer(rectOfInterest: rectOfInterest)
+
+            // ✅ rectOfInterest 를 설정(=제한영역 설정 완료)
+            output.rectOfInterest = rectConverted
+
+            // ✅ 정사각형 가이드 라인 추가
+            setGuideCrossLineView(rectOfInterest: rectOfInterest)
+            
+            captureSession.startRunning()
+        }
+        catch {
+            print("error")
+        }
+    }
+    
+    // ✅ preview layer 에서의 영역 변환값을 리턴받아 사용하기 위해서 기존 코드에서 수정해주었다.
+    private func setVideoLayer(rectOfInterest: CGRect) -> CGRect{
+        // 영상을 담을 공간.
+        let videoLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        //카메라의 크기 지정
+        videoLayer.frame = view.layer.bounds
+        //카메라의 비율지정
+        videoLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        view.layer.addSublayer(videoLayer)
+        
+        return videoLayer.metadataOutputRectConverted(fromLayerRect: rectOfInterest)
+    }
+
+    private func setGuideCrossLineView(rectOfInterest: CGRect) { 
+    //...
+    }
+}
+```
+
+✅ **가이드라인 추가**
+
+```swift
+extension QRCodeReaderViewController {
+
+    // ...
+
+    private func setGuideCrossLineView(rectOfInterest: CGRect) {
+
+        // 생략된 코드는 + 모양 가이드라인 추가 코드이다.
+        // ...
+        
+        let cornerLength: CGFloat = 20
+        let cornerLineWidth: CGFloat = 5
+        
+        // ✅ 가이드라인의 각 모서리 point
+        let upperLeftPoint = CGPoint(x: rectOfInterest.minX, y: rectOfInterest.minY)
+        let upperRightPoint = CGPoint(x: rectOfInterest.maxX, y: rectOfInterest.minY)
+        let lowerRightPoint = CGPoint(x: rectOfInterest.maxX, y: rectOfInterest.maxY)
+        let lowerLeftPoint = CGPoint(x: rectOfInterest.minX, y: rectOfInterest.maxY)
+        
+        // ✅ 각 모서리를 중심으로 한 Edge를 그림.
+        let upperLeftCorner = UIBezierPath()
+        upperLeftCorner.lineWidth = cornerLineWidth
+        upperLeftCorner.move(to: CGPoint(x: upperLeftPoint.x + cornerLength, y: upperLeftPoint.y))
+        upperLeftCorner.addLine(to: CGPoint(x: upperLeftPoint.x, y: upperLeftPoint.y))
+        upperLeftCorner.addLine(to: CGPoint(x: upperLeftPoint.x, y: upperLeftPoint.y + cornerLength))
+        
+        let upperRightCorner = UIBezierPath()
+        upperRightCorner.lineWidth = cornerLineWidth
+        upperRightCorner.move(to: CGPoint(x: upperRightPoint.x - cornerLength, y: upperRightPoint.y))
+        upperRightCorner.addLine(to: CGPoint(x: upperRightPoint.x, y: upperRightPoint.y))
+        upperRightCorner.addLine(to: CGPoint(x: upperRightPoint.x, y: upperRightPoint.y + cornerLength))
+        
+        let lowerRightCorner = UIBezierPath()
+        lowerRightCorner.lineWidth = cornerLineWidth
+        lowerRightCorner.move(to: CGPoint(x: lowerRightPoint.x, y: lowerRightPoint.y - cornerLength))
+        lowerRightCorner.addLine(to: CGPoint(x: lowerRightPoint.x, y: lowerRightPoint.y))
+        lowerRightCorner.addLine(to: CGPoint(x: lowerRightPoint.x - cornerLength, y: lowerRightPoint.y))
+        
+        let lowerLeftCorner = UIBezierPath()
+        lowerLeftCorner.lineWidth = cornerLineWidth
+        lowerLeftCorner.move(to: CGPoint(x: lowerLeftPoint.x + cornerLength, y: lowerLeftPoint.y))
+        lowerLeftCorner.addLine(to: CGPoint(x: lowerLeftPoint.x, y: lowerLeftPoint.y))
+        lowerLeftCorner.addLine(to: CGPoint(x: lowerLeftPoint.x, y: lowerLeftPoint.y - cornerLength))
+        
+        upperLeftCorner.stroke()
+        upperRightCorner.stroke()
+        lowerRightCorner.stroke()
+        lowerLeftCorner.stroke()
+        
+        // ✅ layer 에 추가
+        
+        let upperLeftCornerLayer = CAShapeLayer()
+        upperLeftCornerLayer.path = upperLeftCorner.cgPath
+        upperLeftCornerLayer.strokeColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        upperLeftCornerLayer.fillColor = UIColor.clear.cgColor
+        upperLeftCornerLayer.lineWidth = cornerLineWidth
+        
+        let upperRightCornerLayer = CAShapeLayer()
+        upperRightCornerLayer.path = upperRightCorner.cgPath
+        upperRightCornerLayer.strokeColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        upperRightCornerLayer.fillColor = UIColor.clear.cgColor
+        upperRightCornerLayer.lineWidth = cornerLineWidth
+        
+        let lowerRightCornerLayer = CAShapeLayer()
+        lowerRightCornerLayer.path = lowerRightCorner.cgPath
+        lowerRightCornerLayer.strokeColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        lowerRightCornerLayer.fillColor = UIColor.clear.cgColor
+        lowerRightCornerLayer.lineWidth = cornerLineWidth
+ 
+        let lowerLeftCornerLayer = CAShapeLayer()
+        lowerLeftCornerLayer.path = lowerLeftCorner.cgPath
+        lowerLeftCornerLayer.strokeColor = UIColor.black.withAlphaComponent(0.5).cgColor
+        lowerLeftCornerLayer.fillColor = UIColor.clear.cgColor
+        lowerLeftCornerLayer.lineWidth = cornerLineWidth
+        
+        view.layer.addSublayer(upperLeftCornerLayer)
+        view.layer.addSublayer(upperRightCornerLayer)
+        view.layer.addSublayer(lowerRightCornerLayer)
+        view.layer.addSublayer(lowerLeftCornerLayer)
+    }
+}
+```
 
